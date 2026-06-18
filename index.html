@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CNC Beneden — Werkinstructie</title>
+<style>
+  :root{
+    --bg:#0f1419;
+    --bg-soft:#161d26;
+    --card:#1c2632;
+    --card-2:#222e3c;
+    --line:#2c3a4b;
+    --txt:#e8eef5;
+    --muted:#94a6ba;
+    --accent:#3ea6ff;
+    --accent-2:#2f7fd1;
+    --green:#27c08a;
+    --amber:#ffb02e;
+    --red:#ff5d52;
+    --radius:16px;
+    --shadow:0 10px 40px rgba(0,0,0,.45);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:radial-gradient(1200px 600px at 70% -10%,#1b2937 0%,var(--bg) 55%);
+    color:var(--txt);
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  /* ---------- Progress bar ---------- */
+  #progress{
+    position:fixed;top:0;left:0;height:4px;width:0%;
+    background:linear-gradient(90deg,var(--accent),var(--green));
+    z-index:1000;transition:width .1s linear;
+  }
+
+  /* ---------- Hero ---------- */
+  header.hero{
+    min-height:78vh;display:flex;flex-direction:column;justify-content:center;align-items:center;
+    text-align:center;padding:60px 20px;position:relative;overflow:hidden;
+  }
+  .hero .machine-tag{
+    font-size:14px;letter-spacing:4px;color:var(--accent);font-weight:700;
+    border:1px solid var(--line);padding:8px 18px;border-radius:999px;background:rgba(62,166,255,.08);
+    opacity:0;transform:translateY(20px);animation:rise .7s .1s forwards;
+  }
+  .hero h1{
+    font-size:clamp(38px,8vw,84px);font-weight:800;line-height:1.05;margin:24px 0 10px;
+    background:linear-gradient(120deg,#fff,#9cc7ff 60%,#3ea6ff);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+    opacity:0;transform:translateY(28px);animation:rise .8s .25s forwards;
+  }
+  .hero p.sub{
+    font-size:clamp(16px,2.4vw,22px);color:var(--muted);max-width:640px;
+    opacity:0;transform:translateY(28px);animation:rise .8s .4s forwards;
+  }
+  .hero .scroll-hint{
+    margin-top:54px;color:var(--muted);font-size:13px;letter-spacing:2px;
+    opacity:0;animation:fade 1s 1.1s forwards;
+  }
+  .hero .scroll-hint .chev{display:block;font-size:26px;margin-top:4px;animation:bob 1.6s infinite ease-in-out}
+
+  /* ---------- Task nav ---------- */
+  nav.tasks{
+    display:flex;gap:16px;flex-wrap:wrap;justify-content:center;margin-top:40px;
+    opacity:0;transform:translateY(28px);animation:rise .8s .55s forwards;
+  }
+  nav.tasks a{
+    text-decoration:none;color:var(--txt);background:var(--card);border:1px solid var(--line);
+    border-radius:var(--radius);padding:18px 26px;min-width:230px;display:flex;align-items:center;gap:14px;
+    transition:transform .2s,border-color .2s,background .2s;
+  }
+  nav.tasks a:hover{transform:translateY(-4px);border-color:var(--accent);background:var(--card-2)}
+  nav.tasks .num{
+    font-size:22px;font-weight:800;width:46px;height:46px;border-radius:12px;display:grid;place-items:center;
+    background:linear-gradient(135deg,var(--accent),var(--accent-2));color:#04111f;flex:none;
+  }
+  nav.tasks .lbl small{display:block;color:var(--muted);font-weight:500;font-size:12px;letter-spacing:1px}
+  nav.tasks .lbl b{font-size:16px}
+
+  /* ---------- Sections ---------- */
+  main{max-width:880px;margin:0 auto;padding:40px 20px 120px}
+  section.task{margin-top:90px}
+  .task-head{display:flex;align-items:center;gap:18px;margin-bottom:10px}
+  .task-head .badge{
+    font-size:26px;font-weight:800;width:56px;height:56px;border-radius:14px;display:grid;place-items:center;flex:none;
+    background:linear-gradient(135deg,var(--accent),var(--accent-2));color:#04111f;box-shadow:var(--shadow);
+  }
+  .task-head h2{font-size:clamp(26px,5vw,40px);font-weight:800}
+  .task-head .sub{color:var(--muted);font-size:15px}
+  .task-intro{color:var(--muted);margin:6px 0 34px;font-size:16px}
+
+  /* ---------- Steps / timeline ---------- */
+  .steps{position:relative;padding-left:8px}
+  .step{
+    position:relative;display:flex;gap:22px;padding:0 0 28px 0;
+    opacity:0;transform:translateY(30px);transition:opacity .6s,transform .6s;
+  }
+  .step.show{opacity:1;transform:none}
+  .step .rail{display:flex;flex-direction:column;align-items:center;flex:none}
+  .step .dot{
+    width:38px;height:38px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:15px;
+    background:var(--card-2);border:2px solid var(--accent);color:var(--accent);z-index:2;
+  }
+  .step .line{width:2px;flex:1;background:linear-gradient(var(--accent),var(--line));margin-top:4px;min-height:20px}
+  .step:last-child .line{display:none}
+  .step .body{
+    background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:18px 22px;flex:1;
+    transition:border-color .25s,transform .25s;
+  }
+  .step.show .body:hover{border-color:var(--accent);transform:translateX(4px)}
+  .step .body h3{font-size:18px;margin-bottom:6px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .step .body p{color:var(--muted);font-size:15px}
+  .step .body p + p{margin-top:8px}
+
+  .kbd{
+    font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px;font-weight:700;
+    background:#0c121a;border:1px solid var(--line);border-bottom-width:3px;border-radius:7px;padding:2px 10px;color:var(--accent);
+  }
+  .pill{font-size:12px;font-weight:700;padding:3px 10px;border-radius:999px;letter-spacing:.5px}
+  .pill.auto{background:rgba(39,192,138,.15);color:var(--green);border:1px solid rgba(39,192,138,.4)}
+  .pill.hand{background:rgba(255,176,46,.15);color:var(--amber);border:1px solid rgba(255,176,46,.4)}
+
+  /* ---------- Callouts ---------- */
+  .callout{
+    border-radius:var(--radius);padding:16px 20px;margin:6px 0 4px;font-size:14.5px;
+    display:flex;gap:12px;align-items:flex-start;
+  }
+  .callout .ic{font-size:20px;flex:none}
+  .callout.tip{background:rgba(62,166,255,.08);border:1px solid rgba(62,166,255,.35)}
+  .callout.warn{background:rgba(255,93,82,.08);border:1px solid rgba(255,93,82,.4)}
+  .callout b{color:var(--txt)}
+  .callout p{color:var(--muted)}
+
+  /* ---------- Checklist (4 auto-checks) ---------- */
+  .grid4{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:6px}
+  .grid4 .c{
+    background:var(--card-2);border:1px solid var(--line);border-radius:12px;padding:12px 14px;
+    display:flex;align-items:center;gap:10px;font-size:14px;
+  }
+  .grid4 .c .tick{
+    width:24px;height:24px;border-radius:50%;background:var(--green);color:#04111f;display:grid;place-items:center;
+    font-weight:900;font-size:14px;flex:none;animation:pop .5s both;
+  }
+
+  /* ---------- Order number table ---------- */
+  .table-wrap{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;margin-top:6px}
+  table{width:100%;border-collapse:collapse}
+  th,td{padding:13px 16px;text-align:left;font-size:14.5px;border-bottom:1px solid var(--line)}
+  th{background:var(--card-2);color:var(--muted);font-size:12px;letter-spacing:1px;text-transform:uppercase}
+  tr:last-child td{border-bottom:none}
+  td .code{font-family:ui-monospace,Menlo,Consolas,monospace;font-weight:700;color:var(--accent);letter-spacing:1px}
+
+  /* ---------- Image figure ---------- */
+  figure{
+    margin:14px 0 4px;border-radius:var(--radius);overflow:hidden;border:1px solid var(--line);background:#000;
+  }
+  figure img{width:100%;display:block}
+  figcaption{padding:10px 16px;font-size:13px;color:var(--muted);background:var(--card)}
+
+  /* ---------- Footer ---------- */
+  footer{text-align:center;padding:50px 20px;color:var(--muted);font-size:13px;border-top:1px solid var(--line)}
+
+  /* ---------- Animations ---------- */
+  @keyframes rise{to{opacity:1;transform:none}}
+  @keyframes fade{to{opacity:1}}
+  @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(8px)}}
+  @keyframes pop{0%{transform:scale(0)}70%{transform:scale(1.2)}100%{transform:scale(1)}}
+
+  @media (max-width:560px){
+    nav.tasks a{min-width:100%}
+    .grid4{grid-template-columns:1fr}
+    .step{gap:14px}
+  }
+  @media (prefers-reduced-motion:reduce){
+    *{animation:none!important;transition:none!important}
+    .step{opacity:1;transform:none}
+  }
+</style>
+</head>
+<body>
+
+<div id="progress"></div>
+
+<header class="hero">
+  <span class="machine-tag">SBZ 122.71 · CNC BENEDEN</span>
+  <h1>CNC Werkinstructie</h1>
+  <p class="sub">Stap voor stap: de machine opstarten en een spindel / frees vervangen. Volg de taken van boven naar beneden.</p>
+
+  <nav class="tasks">
+    <a href="#opstarten">
+      <span class="num">1</span>
+      <span class="lbl"><small>TAAK 1</small><b>Machine opstarten</b></span>
+    </a>
+    <a href="#vervangen">
+      <span class="num">2</span>
+      <span class="lbl"><small>TAAK 2</small><b>Spindel / frees vervangen</b></span>
+    </a>
+  </nav>
+
+  <div class="scroll-hint">SCROLL OM TE BEGINNEN<span class="chev">⌄</span></div>
+</header>
+
+<main>
+
+  <!-- ============ TAAK 1 ============ -->
+  <section class="task" id="opstarten">
+    <div class="task-head">
+      <span class="badge">1</span>
+      <div>
+        <h2>Machine opstarten</h2>
+        <div class="sub">Van stroom aan tot bedieningssysteem klaar voor gebruik</div>
+      </div>
+    </div>
+    <p class="task-intro">Volg deze vijf stappen in volgorde. De machine controleert daarna zelf vier basispunten voordat je kunt beginnen.</p>
+
+    <div class="steps">
+
+      <div class="step">
+        <div class="rail"><div class="dot">1</div><div class="line"></div></div>
+        <div class="body">
+          <h3>Zet de stroom aan</h3>
+          <p>Schakel de stroom in met de <b>grote schakelaar aan de zijkant</b> van de machine.</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="rail"><div class="dot">2</div><div class="line"></div></div>
+        <div class="body">
+          <h3>Wacht tot het scherm aangaat <span class="pill auto">AUTOMATISCH</span></h3>
+          <p>Het scherm start op en <b>logt automatisch in</b>. Je wordt doorgeleid naar het besturingssysteem.</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="rail"><div class="dot">3</div><div class="line"></div></div>
+        <div class="body">
+          <h3>Druk de stuurspanning aan</h3>
+          <p>Druk op de <b>blauwe knop links onderin</b> het bedieningspaneel om de stuurspanning in te schakelen.</p>
+          <figure>
+            <img src="images/bedieningspaneel.png" alt="Bedieningspaneel met aan/uit-knop, noodstop en sleutelschakelaar" loading="lazy">
+            <figcaption>Bedieningspaneel — stuurspanning / aan-knop links onderin, naast de noodstop (rood) en de sleutelschakelaar.</figcaption>
+          </figure>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="rail"><div class="dot">4</div><div class="line"></div></div>
+        <div class="body">
+          <h3>Machinestatus verschijnt <span class="pill auto">AUTOMATISCH</span></h3>
+          <p>Er verschijnt een <b>machinestatus-scherm</b> met meerdere checkpoints. Vier basispunten worden vanzelf nagekeken — de machine loopt ze geleidelijk door:</p>
+          <div class="grid4">
+            <div class="c"><span class="tick">✓</span> Positie- / referentiecontrole</div>
+            <div class="c"><span class="tick">✓</span> Detectiebundel (lichtscherm)</div>
+            <div class="c"><span class="tick">✓</span> Opwarming</div>
+            <div class="c"><span class="tick">✓</span> Onderhoudsinformatie</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="rail"><div class="dot">5</div><div class="line"></div></div>
+        <div class="body">
+          <h3>Klaar voor gebruik</h3>
+          <p>Zodra alle checkpoints zijn doorlopen, is de machine bedrijfsklaar.</p>
+          <div class="callout tip"><span class="ic">💡</span><p>Wacht altijd tot de vier controles volledig zijn afgerond voordat je verder gaat.</p></div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ============ TAAK 2 ============ -->
+  <section class="task" id="vervangen">
+    <div class="task-head">
+      <span class="badge">2</span>
+      <div>
+        <h2>Spindel / frees vervangen</h2>
+        <div class="sub">Een gereedschap inlezen, opmeten en in het magazijn plaatsen</div>
+      </div>
+    </div>
+    <p class="task-intro">Twee routes: een <b>bestaand</b> gereedschap kiezen, of een <b>nieuw</b> standaardgereedschap inlezen. Daarna meet je de lengte en laat de machine de frees zelf op de juiste magazijnplek zetten.</p>
+
+    <div class="steps">
+
+      <div class="step">
+        <div class="rail"><div class="dot">1</div><div class="line"></div></div>
+        <div class="body">
+          <h3>Open Tool Management <span class="kbd">F3</span></h3>
+          <p>Voor handmatig vervangen ga je naar <span class="kbd">F3</span> — dat is het <b>gereedschapsbeheer (Tool Management)</b>.</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="rail"><div class="dot">2</div><div class="line"></div></div>
+        <div class="body">
+          <h3>Kies het juiste magazijn</h3>
+          <p>Er zijn <b>vijf magazijnen</b>, weergegeven met nummers. Diezelfde nummers zie je ook terug in de machine zelf.</p>
+          <p><span class="pill hand">HANDMATIG</span> betekent: een gereedschap opnieuw inlezen dat er nog niet bestond. Kies je een magazijn, dan kun je daar een bestaand gereedschap in zetten.</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="rail"><div class="dot">3</div><div class="line"></div></div>
+        <div class="body">
+          <h3>Bestaand gereedschap kiezen</h3>
+          <p>Er staat een hele rij <b>frezen die al ingewerkt zijn</b>, met vaste afmetingen en al gestabiliseerd. Daar kun je direct uit kiezen.</p>
+          <figure>
+            <img src="images/gereedschapsselectie.png" alt="Gereedschapsselectie-scherm met lijst van frezen" loading="lazy">
+            <figcaption>Gereedschapsselectie — lijst van bestaande frezen met type, zijde, gewicht en eigenaar (magazijn). Knoppen <b>Nieuw</b> / <b>Bewerken</b> rechtsonder.</figcaption>
+          </figure>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="rail"><div class="dot">4</div><div class="line"></div></div>
+        <div class="body">
+          <h3>Of: een nieuw standaardgereedschap inlezen</h3>
+          <p>Wil je een gereedschap dat er nog niet is? Ga linksboven naar <b>Bewerkingen → Gereedschappen</b> en klik op <span class="kbd">Nieuw</span>.</p>
+          <p>Daar staat een selectie van <b>124 standaardgereedschappen</b> voor allerlei doeleinden en afmetingen. Selecteer er één en zet hem in het magazijn.</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="rail"><div class="dot">5</div><div class="line"></div></div>
+        <div class="body">
+          <h3>Gebruik de juiste bestelcodes</h3>
+          <div class="callout warn"><span class="ic">⚠️</span><p><b>Let op:</b> koppel altijd de <b>juiste code aan de juiste aangekochte tool</b>. Verkeerde codes geven problemen.</p></div>
+          <p>Standaard houders — bestelnummers:</p>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Bestelnummer</th><th>Specificatie</th></tr></thead>
+              <tbody>
+                <tr><td><span class="code">136 35 08 17</span></td><td>Dia 63 mm / lengte 67</td></tr>
+                <tr><td><span class="code">136 35 08 13</span></td><td>Standaard houder (type 13)</td></tr>
+                <tr><td><span class="code">136 35 08 18</span></td><td>Standaard houder (type 18)</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="rail"><div class="dot">6</div><div class="line"></div></div>
+        <div class="body">
+          <h3>Bepaal het houdertype</h3>
+          <p>Dubbelklik in hetzelfde bewerkingsmenu op een gereedschap dat al ingelezen is. Daar zie je de <b>houder</b>.</p>
+          <p>De <b>laatste twee cijfers</b> van het houdernummer geven het type aan: <span class="kbd">18</span> standaard, <span class="kbd">13</span> standaard, <span class="kbd">00</span> standaard. Pak de bijbehorende houder erbij.</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="rail"><div class="dot">7</div><div class="line"></div></div>
+        <div class="body">
+          <h3>Meet de geometrie (totale lengte)</h3>
+          <p>Kijk bij <b>geometry</b> naar de totale lengte. Meet die met een <b>accurate metalen maatstaf</b>. Zet de frees vast in de houder op de werkbank.</p>
+          <div class="callout tip"><span class="ic">💡</span><p>De <b>geometrie</b> is het belangrijkste — die kun je later altijd nog aanpassen. Zet hem dus eerst zo dicht mogelijk in de buurt.</p></div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="rail"><div class="dot">8</div><div class="line"></div></div>
+        <div class="body">
+          <h3>Reken +1 mm voor de spantang</h3>
+          <p>Is de spantang nog niet vastgedraaid? Reken dan op <b>1 mm méér</b> dan de huidige geometrie-lengte.</p>
+          <p>Bij kleine frezen wordt de frees namelijk nog ±1 mm <b>dieper in de spantang getrokken</b> zodra je die met de moersleutel aantrekt.</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="rail"><div class="dot">9</div><div class="line"></div></div>
+        <div class="body">
+          <h3>Laat de machine de frees plaatsen</h3>
+          <p>Pas eerst de geometrie aan naar de actuele lengte. Ga dan in <span class="kbd">F3</span> naar <b>"Gereedschapwisselaar tonen"</b> en volg:</p>
+          <p>① Links onder: <b>Gereedschap opnemen</b>. &nbsp;② Pijltje links daarvan: <b>gereedschap opvullen</b>. &nbsp;③ Rechter knop met pijltje: kies <b>welke spindelhouder</b> je gevuld wilt hebben (bv. <span class="kbd">123</span>).</p>
+          <p>④ Druk op <b>"gereedschap plaats opvullen"</b>. &nbsp;⑤ Druk de freeskop handmatig in de machine. &nbsp;⑥ Druk op <span class="kbd">Start</span>.</p>
+          <div class="callout tip"><span class="ic">✅</span><p>De machine verwerkt de frees nu zelf naar de magazijnplek die je hebt gekozen.</p></div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  CNC Beneden — SBZ 122.71 · Werkinstructie · opstarten &amp; spindel vervangen
+</footer>
+
+<script>
+  // Progress bar
+  const prog = document.getElementById('progress');
+  function updateProgress(){
+    const h = document.documentElement;
+    const scrolled = (h.scrollTop) / (h.scrollHeight - h.clientHeight);
+    prog.style.width = Math.min(100, scrolled*100) + '%';
+  }
+  window.addEventListener('scroll', updateProgress, {passive:true});
+  updateProgress();
+
+  // Reveal steps on scroll
+  const obs = new IntersectionObserver((entries)=>{
+    entries.forEach(e=>{
+      if(e.isIntersecting){ e.target.classList.add('show'); obs.unobserve(e.target); }
+    });
+  }, {threshold:.15});
+  document.querySelectorAll('.step').forEach((s,i)=>{
+    s.style.transitionDelay = (i % 4 * 0.06) + 's';
+    obs.observe(s);
+  });
+</script>
+
+</body>
+</html>
