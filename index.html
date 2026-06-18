@@ -261,16 +261,57 @@
     .chk .ba{width:70px} .chk .st{width:48px}
   }
   @media (prefers-reduced-motion:reduce){*{animation-duration:.001s!important}}
+
+  /* ---------- Sticky topbar ---------- */
+  .topbar{position:fixed;top:0;left:0;right:0;z-index:900;display:flex;align-items:center;gap:8px;
+    padding:8px 14px;background:rgba(15,20,25,.86);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);
+    transform:translateY(-110%);transition:transform .35s;overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .topbar.show{transform:none}
+  .topbar .home{font-weight:800;color:#fff;font-size:13px;letter-spacing:1px;text-decoration:none;white-space:nowrap;padding-right:6px;border-right:1px solid var(--line)}
+  .topbar .home b{color:var(--elu)}
+  .topbar a.lnk{text-decoration:none;color:var(--muted);font-size:13px;font-weight:600;padding:7px 12px;border-radius:8px;white-space:nowrap;transition:.2s}
+  .topbar a.lnk:hover{color:var(--txt);background:var(--card-2)}
+  .topbar a.lnk.active{color:var(--accent);background:rgba(62,166,255,.12)}
+
+  /* ---------- In het kort ---------- */
+  .tldr{background:linear-gradient(135deg,rgba(62,166,255,.10),rgba(39,192,138,.06));
+    border:1px solid rgba(62,166,255,.30);border-radius:var(--radius);padding:18px 22px;margin:0 0 28px}
+  .tldr .lab{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:800;letter-spacing:1.5px;
+    color:var(--accent);text-transform:uppercase;margin-bottom:8px}
+  .tldr ol{margin:0;padding-left:20px;color:var(--txt);font-size:15px}
+  .tldr ol li{margin:3px 0}
+  .tldr ol li b{color:#fff}
+
+  /* ---------- Back to top ---------- */
+  #toTop{position:fixed;right:18px;bottom:18px;z-index:901;width:50px;height:50px;border-radius:50%;border:1px solid var(--line);
+    background:var(--accent);color:#04111f;font-size:22px;font-weight:900;cursor:pointer;box-shadow:var(--shadow);
+    opacity:0;pointer-events:none;transition:opacity .3s,transform .2s}
+  #toTop.show{opacity:1;pointer-events:auto}
+  #toTop:hover{transform:translateY(-3px)}
+
+  /* scroll-margin so anchors clear the sticky bar */
+  section{scroll-margin-top:64px}
 </style>
 </head>
 <body>
 <div id="progress"></div>
 
-<header class="hero">
+<div class="topbar" id="topbar">
+  <a href="#top" class="home"><b>elu</b>matec · SBZ 122/71</a>
+  <a href="#machine" class="lnk">Machine</a>
+  <a href="#sim" class="lnk">Besturing</a>
+  <a href="#opstarten" class="lnk">1 · Opstarten</a>
+  <a href="#vervangen" class="lnk">2 · Spindel</a>
+  <a href="#diepte" class="lnk">3 · Diepte</a>
+</div>
+
+<button id="toTop" title="Terug naar boven" aria-label="Terug naar boven">↑</button>
+
+<header class="hero" id="top">
   <span class="machine-tag">PROFIELBEWERKINGSCENTRUM · CNC BENEDEN</span>
   <h1>Elumatec Werkinstructie</h1>
   <div class="model">SBZ 122/71</div>
-  <p class="sub">Opstarten van de machine en het vervangen van een spindel / frees — met een geanimeerde simulatie van de eluCad-besturing.</p>
+  <p class="sub">Een naslagwerk om de machine <b>zelfstandig en op eigen tempo</b> te leren bedienen. Weet je iets even niet meer? Scroll gewoon terug naar de juiste taak — alle stappen staan er met foto's en animaties bij.</p>
   <nav class="tasks">
     <a href="#machine"><span class="num">i</span><span class="lbl"><small>OVER</small><b>De machine</b></span></a>
     <a href="#sim"><span class="num">▶</span><span class="lbl"><small>LIVE</small><b>Besturingssysteem</b></span></a>
@@ -445,6 +486,16 @@
     </div>
     <p class="sec-intro">Vijf stappen in volgorde. Daarna controleert de eci2-besturing zelf vier basispunten — dezelfde sequentie die je hierboven in de simulatie ziet.</p>
 
+    <div class="tldr">
+      <span class="lab">⚡ In het kort</span>
+      <ol>
+        <li><b>Stroom aan</b> met de grote schakelaar aan de zijkant.</li>
+        <li>Scherm gaat aan en <b>logt automatisch in</b>.</li>
+        <li>Druk de <b>stuurspanning</b> aan — blauwe knop links onderin.</li>
+        <li>Wacht tot de <b>4 controles</b> klaar zijn → machine is bedrijfsklaar.</li>
+      </ol>
+    </div>
+
     <div class="steps">
       <div class="step"><div class="rail"><div class="dot">1</div><div class="line"></div></div>
         <div class="body"><h3>Zet de stroom aan</h3>
@@ -484,6 +535,16 @@
       <div><h2>Spindel / frees vervangen</h2><div class="sub">Gereedschap inlezen, opmeten en in het magazijn plaatsen</div></div>
     </div>
     <p class="sec-intro">Twee routes: een <b>bestaand</b> gereedschap kiezen, of een <b>nieuw</b> standaardgereedschap inlezen. Daarna meet je de lengte en laat je de machine de frees zelf op de juiste magazijnplek zetten.</p>
+
+    <div class="tldr">
+      <span class="lab">⚡ In het kort</span>
+      <ol>
+        <li>Ga naar <b>F3 · Tool Management</b> en kies het juiste <b>magazijn</b>.</li>
+        <li>Kies een bestaand gereedschap, of lees een nieuw in via <b>Bewerkingen → Gereedschappen → Nieuw</b> (let op de juiste bestelcode).</li>
+        <li><b>Meet de lengte</b> en zet de geometrie (bij kleine frezen: <b>+1 mm</b> voor de spantang).</li>
+        <li><b>F3 → Gereedschapwisselaar</b>: spindelhouder kiezen → opvullen → freeskop inzetten → <b>Start</b>.</li>
+      </ol>
+    </div>
 
     <div class="steps">
       <div class="step"><div class="rail"><div class="dot">1</div><div class="line"></div></div>
@@ -550,6 +611,16 @@
     </div>
     <p class="sec-intro">Wil je de <b>freesdiepte</b> van een bewerking veranderen? Dat doe je per macro (een cirkel of rechthoek) via de <b>Dieptetabel</b>. Daarin pas je de <b>Maat</b> aan — dat is de diepte.</p>
 
+    <div class="tldr">
+      <span class="lab">⚡ In het kort</span>
+      <ol>
+        <li>Open het <b>programma</b> → je komt in het teken- en bewerkingssysteem.</li>
+        <li>Klik op <b>Profiel</b> → kies de <b>zijde</b> → klik de <b>macro</b> aan (cirkel of rechthoek).</li>
+        <li>Klik rechtsonder op <b>Dieptetabel</b>.</li>
+        <li>Pas de <b>Maat</b> (diepte) aan bij Nr 2 en bevestig met <b>OK</b>.</li>
+      </ol>
+    </div>
+
     <figure style="margin-bottom:26px">
       <img src="dieptetabel.gif" alt="Animatie van de Dieptetabel waarin de maat wordt aangepast" loading="lazy">
       <figcaption>Dieptetabel (scherm 314): selecteer Nr 2, voer de nieuwe maat in en bevestig met OK. Per regel kun je ook Voeding [%] en Toerental [%] zetten.</figcaption>
@@ -600,10 +671,25 @@
 </footer>
 
 <script>
-  /* progress bar */
+  /* progress bar + sticky topbar + back-to-top */
   const prog=document.getElementById('progress');
-  const upd=()=>{const h=document.documentElement;prog.style.width=Math.min(100,(h.scrollTop)/(h.scrollHeight-h.clientHeight)*100)+'%';};
+  const topbar=document.getElementById('topbar');
+  const toTop=document.getElementById('toTop');
+  const navLinks=[...document.querySelectorAll('.topbar a.lnk')];
+  const secs=navLinks.map(a=>document.querySelector(a.getAttribute('href')));
+  const upd=()=>{
+    const h=document.documentElement, y=h.scrollTop;
+    prog.style.width=Math.min(100,y/(h.scrollHeight-h.clientHeight)*100)+'%';
+    const past=y>520;
+    topbar.classList.toggle('show',past);
+    toTop.classList.toggle('show',past);
+    /* active section highlight */
+    let idx=-1;
+    secs.forEach((s,i)=>{ if(s && s.getBoundingClientRect().top<=120) idx=i; });
+    navLinks.forEach((a,i)=>a.classList.toggle('active',i===idx));
+  };
   addEventListener('scroll',upd,{passive:true});upd();
+  toTop.addEventListener('click',()=>scrollTo({top:0,behavior:'smooth'}));
 
   /* reveal on scroll */
   const obs=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('show');obs.unobserve(e.target);}}),{threshold:.14});
