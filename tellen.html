@@ -114,6 +114,47 @@
     background:var(--bg);border:1px solid var(--line);color:var(--txt);outline:none}
   .stepper input:focus{border-color:var(--blue)}
   .item .edit{color:var(--soft);font-size:18px;padding:4px;align-self:flex-start}
+  .row-actions{display:flex;flex-direction:column;gap:2px;flex:none;align-self:flex-start}
+  .row-actions button{font-size:17px;padding:4px 5px;border-radius:8px;color:var(--soft)}
+  .row-actions button:hover{color:var(--txt);background:var(--panel-2)}
+  .row-actions .weigh.on{color:var(--obimex)}
+  .thumb{width:50px;height:50px;border-radius:10px;flex:none;background:var(--panel-2);border:1px solid var(--line);
+    overflow:hidden;display:grid;place-items:center;cursor:pointer;font-size:20px;color:var(--soft)}
+  .thumb img{width:100%;height:100%;object-fit:cover}
+  .item .loc{color:#caa6ff}
+  .item .byw{color:var(--obimex)}
+  .weigh-show{font-size:13px;color:#ffd0a8;background:rgba(255,122,24,.08);border-radius:9px;padding:8px 11px;border:1px solid rgba(255,122,24,.25);display:flex;gap:7px;align-items:center}
+  .doorgeef{display:inline-block;font-size:10px;letter-spacing:.5px;text-transform:uppercase;background:rgba(255,122,24,.18);
+    color:#ffd0a8;border:1px solid var(--obimex);border-radius:6px;padding:2px 6px;margin-left:6px}
+
+  /* location filter */
+  .locbar{display:flex;align-items:center;gap:8px;padding:4px 0 0}
+  .locbar select{flex:1;background:var(--panel);border:1px solid var(--line);border-radius:10px;color:var(--txt);
+    font-size:14px;padding:10px 12px;outline:none}
+  .locbar select:focus{border-color:var(--blue)}
+  .locbar .pin{color:#caa6ff;font-size:16px}
+
+  /* image fullscreen */
+  #imgOverlay .sheet{background:#0a0f15;text-align:center}
+  #imgFull{max-width:100%;max-height:74vh;border-radius:12px}
+
+  /* foto/weeg blokken in edit sheet */
+  .photo-box{margin-top:12px;display:flex;gap:12px;align-items:center}
+  .photo-box .pv{width:84px;height:84px;border-radius:12px;background:var(--bg);border:1px solid var(--line);
+    overflow:hidden;display:grid;place-items:center;color:var(--soft);font-size:26px;flex:none}
+  .photo-box .pv img{width:100%;height:100%;object-fit:cover}
+  .weigh-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+  .weigh-out{margin-top:10px;background:var(--panel-2);border:1px solid var(--line);border-radius:12px;padding:13px;
+    text-align:center;font-size:15px}
+  .weigh-out b{font-size:26px;color:var(--obimex);display:block}
+
+  /* archief kaart */
+  .arc{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:12px 14px;margin-bottom:9px;
+    display:flex;align-items:center;gap:12px}
+  .arc .meta{flex:1;min-width:0}
+  .arc .name{font-weight:700}
+  .arc .sub{color:var(--muted);font-size:12.5px;margin-top:3px}
+  .arc .src{font-size:11px;color:var(--soft);text-transform:uppercase;letter-spacing:.5px}
 
   /* glas bonnen rows differ */
   .item.bon{flex-direction:column;align-items:stretch;gap:8px}
@@ -205,6 +246,10 @@
     <button class="tab" data-f="dev">⚠ Afwijkingen</button>
     <button class="tab" data-f="flag">🚩 Management</button>
   </div>
+  <div class="locbar" id="locbar" style="display:none">
+    <span class="pin">📍</span>
+    <select id="locFilter"><option value="">Alle locaties / zones</option></select>
+  </div>
 </div>
 
 <main id="list"></main>
@@ -257,10 +302,54 @@
     <label style="display:flex;gap:9px;align-items:center;color:var(--txt);font-size:14.5px;margin-top:10px;font-weight:600">
       <input type="checkbox" id="f_flag" style="width:18px;height:18px"> 🚩 Markeren voor management (laten controleren)</label>
     <div class="row">
+      <label class="f" style="flex:1"><span class="lab">Locatie / zone</span><input class="t" id="f_loc" list="locList" placeholder="bv. G, K, Voorraad glas"></label>
+      <label class="f" style="flex:1"><span class="lab">Gewicht per stuk (g)</span><input class="t" id="f_uw" inputmode="decimal" placeholder="voor wegen, optioneel"></label>
+    </div>
+    <datalist id="locList"></datalist>
+    <div class="photo-box">
+      <div class="pv" id="f_pv">📷</div>
+      <div style="flex:1">
+        <div class="lab" style="font-size:12px;color:var(--soft);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Foto / dwarsdoorsnede</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn sm" id="f_photoBtn" type="button">📷 Foto kiezen / maken</button>
+          <button class="btn sm ghost" id="f_photoDel" type="button" style="color:var(--red);display:none">Verwijderen</button>
+        </div>
+      </div>
+      <input type="file" id="f_photoInput" accept="image/*" capture="environment" style="display:none">
+    </div>
+    <button class="btn sm" id="f_archive" type="button" style="margin-top:12px;width:100%">📦 Naar oude catalogus verplaatsen</button>
+    <div class="row">
       <button class="btn blue" style="flex:1" id="editSave">Opslaan</button>
       <button class="btn ghost" id="editDelete" style="color:var(--red)">Verwijderen</button>
       <button class="btn ghost" id="editClose">Annuleren</button>
     </div>
+  </div>
+</div>
+
+<!-- Weeg overlay -->
+<div class="overlay" id="weighOverlay">
+  <div class="sheet">
+    <h3>⚖ Wegen i.p.v. tellen</h3>
+    <p class="hint" id="weighHint"></p>
+    <div class="weigh-grid">
+      <label class="f" style="margin:0"><span class="lab">Totaalgewicht (g)</span><input class="t" id="w_total" inputmode="decimal" placeholder="bv. 1240"></label>
+      <label class="f" style="margin:0"><span class="lab">Tarra / bak (g)</span><input class="t" id="w_tare" inputmode="decimal" placeholder="0"></label>
+    </div>
+    <label class="f"><span class="lab">Gewicht per stuk (g)</span><input class="t" id="w_uw" inputmode="decimal" placeholder="bv. 5"></label>
+    <div class="weigh-out">Berekend aantal<b id="w_out">—</b><span id="w_calc" style="color:var(--muted);font-size:12.5px"></span></div>
+    <div class="row">
+      <button class="btn blue" style="flex:1" id="weighUse">Gebruik als telling</button>
+      <button class="btn ghost" id="weighClose">Annuleren</button>
+    </div>
+  </div>
+</div>
+
+<!-- Image fullscreen overlay -->
+<div class="overlay" id="imgOverlay">
+  <div class="sheet">
+    <h3 id="imgTitle">Foto</h3>
+    <img id="imgFull" alt="">
+    <div class="row"><button class="btn ghost" style="flex:1" id="imgClose">Sluiten</button></div>
   </div>
 </div>
 
@@ -274,6 +363,7 @@
       <button class="btn" id="mImport">⇧ Importeren (CSV / plakken)</button>
       <button class="btn" id="mBackup">⤓ Back-up downloaden (JSON)</button>
       <button class="btn" id="mRestore">⤒ Back-up terugzetten (JSON)</button>
+      <button class="btn" id="mArchiveUncounted">📦 Niet-getelde artikelen → oude catalogus</button>
       <button class="btn" id="mResetCounts" style="color:var(--amber)">↺ Tellingen van deze lijst wissen</button>
       <div style="background:var(--panel-2);border:1px solid var(--line);border-radius:12px;padding:11px 13px;margin-top:4px">
         <div style="font-size:12px;color:var(--soft);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Waarschuwen bij afwijking vanaf</div>
@@ -294,7 +384,7 @@
   <div class="sheet">
     <h3>⇧ Importeren in: <span id="importListName"></span></h3>
     <p class="hint">Plak hier regels uit Excel of een CSV. Eén artikel per regel. Kolommen gescheiden door tab, komma of puntkomma:<br>
-      <b>Pr.nr ; Art.nr ; Profielnaam ; Lengte ; Verwacht ; Boal ; Art.nr Brut ; Leverancier</b><br>
+      <b>Pr.nr ; Art.nr ; Profielnaam ; Lengte ; Verwacht ; Boal ; Art.nr Brut ; Leverancier ; Locatie</b><br>
       (Alleen Art.nr en Profielnaam zijn echt nodig. <b>Verwacht</b> = voorraad volgens systeem, voor de automatische controle.)</p>
     <textarea class="t" id="importText" rows="9" placeholder="23&#9;9100202891&#9;H-profiel h.g.&#9;2800
 24&#9;9100202890&#9;H-profiel h.v.h.g.&#9;2600"></textarea>
@@ -323,8 +413,10 @@ const LIST_DEFS = [
   { id:"brut",  name:"Brut H-profiel", short:"Brut", type:"profiel", showBoal:true  },
   { id:"wit",   name:"Almelo Wit",     short:"Wit",  type:"profiel", showBoal:false },
   { id:"9005",  name:"Almelo 9005 FS", short:"9005 FS", type:"profiel", showBoal:false },
+  { id:"vrij",  name:"Vrije invoer (niet op lijst)", short:"➕ Vrij", type:"vrij", showBoal:false },
   { id:"bon",   name:"Geleverde bonnen (glas)", short:"Glas bonnen", type:"bon" }
 ];
+const ARCHIEF="archief"; // speciale weergave: oude catalogus
 
 /* ---- Seed-data: voorbeeldregels uit de telfoto's (30-6-2026).
    Te corrigeren/aanvullen via 'Importeren' of het potlood-icoon. ---- */
@@ -418,14 +510,15 @@ const SEED = {
     {pos:"",art:"232005927",name:'Volglas "Dubbel" plafond profiel 12mm (55/2) 9005 FS',len:4000},
     {pos:"",art:"232005929",name:'Volglas "Dubbel" plafond profiel 12mm (66/2) 9005 FS',len:4000}
   ],
+  vrij:[],
   bon:[]
 };
 
 /* ---------- State ---------- */
+const DEFAULT_SETTINGS = { tolAbs:3, tolPct:10 };
 let DB = load();
 let activeList = DB.activeList || "brut";
 
-const DEFAULT_SETTINGS = { tolAbs:3, tolPct:10 };
 function freshDB(){
   const lists = {};
   for(const def of LIST_DEFS){
@@ -434,7 +527,8 @@ function freshDB(){
       uid: def.id+"_"+i+"_"+Math.round(performance.now()*1000+i),
       pos:r.pos||"", boal:r.boal||"", artBrut:r.artBrut||"", art:(r.art||r.artBrut||"")+"",
       name:r.name||"", len:r.len||"", sup:r.sup||"",
-      count:null, expected:(r.expected??""), note:"", flag:false
+      count:null, expected:(r.expected??""), note:"", flag:false,
+      loc:(r.loc||""), uw:(r.uw||""), wTotal:"", wTare:"", byWeight:false, hasImg:false, archived:false
     }));
   }
   return { v:1, activeList:"brut", settings:Object.assign({},DEFAULT_SETTINGS), lists };
@@ -444,10 +538,18 @@ function load(){
     const raw = localStorage.getItem(STORE_KEY);
     if(raw){ const d = JSON.parse(raw); if(d&&d.lists){
       d.settings = Object.assign({}, DEFAULT_SETTINGS, d.settings||{});
+      if(!d.lists.vrij) d.lists.vrij=[];
       for(const id in d.lists){ (d.lists[id]||[]).forEach(it=>{
         if(it.expected===undefined) it.expected="";
         if(it.note===undefined) it.note="";
         if(it.flag===undefined) it.flag=false;
+        if(it.loc===undefined) it.loc="";
+        if(it.uw===undefined) it.uw="";
+        if(it.wTotal===undefined) it.wTotal="";
+        if(it.wTare===undefined) it.wTare="";
+        if(it.byWeight===undefined) it.byWeight=false;
+        if(it.hasImg===undefined) it.hasImg=false;
+        if(it.archived===undefined) it.archived=false;
       }); }
       return d;
     } }
@@ -461,23 +563,49 @@ function save(){
 function listDef(id){ return LIST_DEFS.find(l=>l.id===id); }
 function items(id){ return DB.lists[id] || (DB.lists[id]=[]); }
 function uid(){ return "x_"+Math.round(performance.now()*1000)+"_"+Math.floor(Math.random()*1e6); }
+function isArchiveView(){ return activeList===ARCHIEF; }
+/* def voor de actieve weergave; bij archief een synthetische def */
+function curDef(){ return isArchiveView() ? {id:ARCHIEF,name:"Oude catalogus",type:"archief"} : listDef(activeList); }
+/* alle items van alle echte lijsten, met hun lijst-def erbij */
+function allItems(){ const out=[]; for(const def of LIST_DEFS){ for(const it of items(def.id)) out.push({it,def}); } return out; }
+
+/* ---------- IndexedDB voor foto's (los van localStorage i.v.m. grootte) ---------- */
+let _idb=null;
+function idb(){ return _idb || (_idb=new Promise((res,rej)=>{
+  const r=indexedDB.open("obimex_img",1);
+  r.onupgradeneeded=()=>{ r.result.createObjectStore("imgs"); };
+  r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error);
+})); }
+async function imgPut(key,blob){ const db=await idb(); return new Promise((res,rej)=>{ const tx=db.transaction("imgs","readwrite"); tx.objectStore("imgs").put(blob,key); tx.oncomplete=res; tx.onerror=()=>rej(tx.error); }); }
+async function imgGet(key){ const db=await idb(); return new Promise((res)=>{ const tx=db.transaction("imgs","readonly"); const rq=tx.objectStore("imgs").get(key); rq.onsuccess=()=>res(rq.result||null); rq.onerror=()=>res(null); }); }
+async function imgDel(key){ const db=await idb(); return new Promise((res)=>{ const tx=db.transaction("imgs","readwrite"); tx.objectStore("imgs").delete(key); tx.oncomplete=res; tx.onerror=res; }); }
 
 /* ---------- Rendering ---------- */
 const $ = s=>document.querySelector(s);
 const listEl = $("#list");
 let filterText = "";
 
+function switchTo(id){ activeList=id; filterText=""; locFilterVal=""; filterMode="all";
+  $("#search").value=""; $("#clr").style.display="none";
+  $("#filters").querySelectorAll(".tab").forEach(b=>b.classList.toggle("active",b.dataset.f==="all"));
+  save(); renderAll(); window.scrollTo(0,0); }
 function renderTabs(){
   const t = $("#tabs"); t.innerHTML="";
   for(const def of LIST_DEFS){
-    const arr = items(def.id);
-    const counted = arr.filter(isCounted).length;
+    const arr = items(def.id).filter(it=>!it.archived);
+    const counted = arr.filter(it=>isCountedIn(def,it)).length;
     const b = document.createElement("button");
     b.className = "tab"+(def.id===activeList?" active":"");
     b.innerHTML = `${def.short} <span class="cnt">${counted}/${arr.length}</span>`;
-    b.onclick = ()=>{ activeList=def.id; filterText=""; $("#search").value=""; $("#clr").style.display="none"; save(); renderAll(); };
+    b.onclick = ()=>switchTo(def.id);
     t.appendChild(b);
   }
+  const arcN = allItems().filter(x=>x.it.archived).length;
+  const ab = document.createElement("button");
+  ab.className="tab"+(isArchiveView()?" active":"");
+  ab.innerHTML = `📦 Oude catalogus <span class="cnt">${arcN}</span>`;
+  ab.onclick = ()=>switchTo(ARCHIEF);
+  t.appendChild(ab);
 }
 
 function isCounted(it){
@@ -513,7 +641,9 @@ function deviation(it){
 }
 
 let filterMode="all"; // all | todo | dev | flag
+let locFilterVal=""; // gekozen locatie/zone
 function passesFilter(def,it){
+  if(locFilterVal && (it.loc||"")!==locFilterVal) return false;
   if(filterMode==="all") return true;
   if(filterMode==="flag") return !!it.flag;
   if(filterMode==="todo") return !isCountedIn(def,it);
@@ -521,14 +651,28 @@ function passesFilter(def,it){
   return true;
 }
 
+function populateLocFilter(){
+  const def=curDef();
+  const showLoc = def.type==="profiel" || def.type==="vrij";
+  $("#locbar").style.display = showLoc ? "flex" : "none";
+  if(!showLoc){ locFilterVal=""; return; }
+  const locs=[...new Set(items(activeList).filter(it=>!it.archived && it.loc).map(it=>it.loc))].sort();
+  const sel=$("#locFilter");
+  sel.innerHTML='<option value="">Alle locaties / zones</option>'+locs.map(l=>`<option${l===locFilterVal?" selected":""}>${esc(l)}</option>`).join("");
+  if(locFilterVal && !locs.includes(locFilterVal)){ locFilterVal=""; sel.value=""; }
+}
+
 function renderList(){
-  const def = listDef(activeList);
-  $("#printTitle").textContent = "Voorraad "+def.name;
+  const def = curDef();
+  $("#printTitle").textContent = isArchiveView()?"Oude catalogus":("Voorraad "+def.name);
   $("#printDate").textContent = TODAY;
-  const arr = items(activeList).filter(it=>matches(it,filterText) && passesFilter(def,it));
+  populateLocFilter();
+  if(isArchiveView()){ renderArchive(); return; }
+  const arr = items(activeList).filter(it=>!it.archived && matches(it,filterText) && passesFilter(def,it));
   listEl.innerHTML = "";
   if(arr.length===0){
     const msg = filterText ? "Geen artikel gevonden voor «"+esc(filterText)+"»."
+      : locFilterVal ? "Geen artikelen op locatie «"+esc(locFilterVal)+"»."
       : filterMode==="dev" ? "🎉 Geen afwijkingen in deze lijst."
       : filterMode==="flag" ? "Niets gemarkeerd voor management."
       : filterMode==="todo" ? "✓ Alles in deze lijst is geteld."
@@ -538,6 +682,28 @@ function renderList(){
   }
   if(def.type==="bon"){ arr.forEach(it=>listEl.appendChild(renderBon(it))); return; }
   arr.forEach(it=>listEl.appendChild(renderItem(it,def)));
+}
+
+function renderArchive(){
+  const arr = allItems().filter(x=>x.it.archived && matches(x.it,filterText));
+  listEl.innerHTML="";
+  if(arr.length===0){
+    listEl.innerHTML=`<div class="empty"><div class="big">📦</div>${filterText?"Niets gevonden in de oude catalogus.":"De oude catalogus is leeg.<br><br>Verplaats verouderde artikelen hierheen via het potlood-icoon of via ⋯ Meer → 'Niet-getelde naar oude catalogus'."}</div>`;
+    return;
+  }
+  arr.forEach(({it,def})=>{
+    const el=document.createElement("div"); el.className="arc";
+    const bits=[it.art||it.artBrut, it.len?it.len+" mm":"", it.loc?("📍 "+it.loc):""].filter(Boolean);
+    el.innerHTML=`<div class="meta"><div class="src">${esc(def.name)}</div>
+      <div class="name">${it.pos?'<span class="pos">'+esc(it.pos)+'</span>':""}${esc(it.name||"—")}</div>
+      <div class="sub">${esc(bits.join("  ·  "))}</div></div>`;
+    const restore=document.createElement("button"); restore.className="btn sm blue"; restore.textContent="↩ Terug";
+    restore.onclick=()=>{ it.archived=false; save(); renderAll(); toast("Terug naar "+def.name,"ok"); };
+    const ed=document.createElement("button"); ed.className="btn sm ghost"; ed.textContent="✎";
+    ed.onclick=()=>{ activeList=def.id; openEdit(it); };
+    el.appendChild(restore); el.appendChild(ed);
+    listEl.appendChild(el);
+  });
 }
 
 function devClass(it){ const d=deviation(it); return d?(d.level==="major"?" dev-major":(d.level==="minor"?" dev-minor":"")):""; }
@@ -550,10 +716,13 @@ function renderItem(it,def){
   if(it.art) sub.push(`<span><span class="k">Art</span> <span class="art">${esc(it.art)}</span></span>`);
   if(def.showBoal && it.boal) sub.push(`<span><span class="k">Boal</span> ${esc(it.boal)}</span>`);
   if(it.len) sub.push(`<span class="len">${esc(it.len)} mm</span>`);
+  if(it.loc) sub.push(`<span class="loc">📍 ${esc(it.loc)}</span>`);
   if(it.expected!=="" && it.expected!=null) sub.push(`<span class="exp"><span class="k">Verwacht</span> ${esc(it.expected)}</span>`);
+  if(it.byWeight) sub.push(`<span class="byw">⚖ via gewicht</span>`);
   if(it.sup) sub.push(`<span><span class="k">Lev</span> ${esc(it.sup)}</span>`);
   el.innerHTML = `
     <div class="item-top">
+      <div class="thumb">${it.hasImg?"":"📷"}</div>
       <div class="meta">
         <div>${it.pos?`<span class="pos">${esc(it.pos)}</span>`:""}<span class="name">${esc(it.name||"—")}</span></div>
         <div class="sub">${sub.join("")}</div>
@@ -563,26 +732,38 @@ function renderItem(it,def){
         <input type="number" inputmode="numeric" value="${it.count??""}" placeholder="0">
         <button aria-label="plus" data-d="1">＋</button>
       </div>
-      <button class="edit" title="Bewerken">✎</button>
+      <div class="row-actions">
+        <button class="edit" title="Bewerken">✎</button>
+        <button class="weigh${it.uw?" on":""}" title="Wegen">⚖</button>
+      </div>
     </div>
     <div class="item-foot"></div>`;
   const input = el.querySelector(".stepper input");
   el.querySelectorAll(".stepper button").forEach(btn=>{
-    btn.onclick = ()=>{ const cur=parseInt(input.value||"0",10)||0; const nv=Math.max(0,cur+parseInt(btn.dataset.d,10)); input.value=nv; commitCount(it,nv,el,def); };
+    btn.onclick = ()=>{ const cur=parseInt(input.value||"0",10)||0; const nv=Math.max(0,cur+parseInt(btn.dataset.d,10)); input.value=nv; it.byWeight=false; commitCount(it,nv,el,def); };
   });
-  input.onchange = ()=>{ const v=input.value.trim(); commitCount(it, v===""?null:Math.max(0,parseInt(v,10)||0), el, def); };
+  input.onchange = ()=>{ const v=input.value.trim(); it.byWeight=false; commitCount(it, v===""?null:Math.max(0,parseInt(v,10)||0), el, def); };
   input.onfocus = ()=>input.select();
   el.querySelector(".edit").onclick = ()=>openEdit(it);
+  el.querySelector(".weigh").onclick = ()=>openWeigh(it,def);
+  const thumb=el.querySelector(".thumb");
+  thumb.onclick=()=>{ if(it.hasImg) showImage(it); else openEdit(it); };
+  if(it.hasImg){ imgGet(it.uid).then(b=>{ if(b){ const u=URL.createObjectURL(b); thumb.innerHTML='<img src="'+u+'">'; } }); }
   buildFoot(el.querySelector(".item-foot"), it, def);
   return el;
 }
 
 function buildFoot(foot, it, def){
   const d=deviation(it);
-  const showFoot = (d && d.level!=="ok") || it.note || it.flag;
+  const showFoot = (d && d.level!=="ok") || it.note || it.flag || (it.byWeight && it.wTotal!=="");
   foot.innerHTML="";
   if(!showFoot){ foot.style.display="none"; return; }
   foot.style.display="flex";
+  if(it.byWeight && it.wTotal!==""){
+    const net=Math.max(0,(parseFloat(it.wTotal)||0)-(parseFloat(it.wTare)||0));
+    foot.insertAdjacentHTML("beforeend",
+      `<div class="weigh-show">⚖ Via gewicht: ${esc(it.wTotal)} g${it.wTare?(" − "+esc(it.wTare)+" g tarra"):""} ÷ ${esc(it.uw)} g/st = <b style="margin-left:4px">${it.count} st</b></div>`);
+  }
   if(d && d.level==="major"){
     const sign=d.diff>0?"+":"";
     foot.insertAdjacentHTML("beforeend",
@@ -649,7 +830,13 @@ function renderBon(it){
 }
 
 function updateStats(){
-  const def=listDef(activeList); const arr=items(activeList);
+  if(isArchiveView()){
+    const n=allItems().filter(x=>x.it.archived).length;
+    $("#statCounted").textContent=n; $("#statTotal").textContent=n; $("#progBar").style.width="0%";
+    $("#statSum").textContent=n+" gearchiveerd"; $("#statDev").style.display="none"; $("#statFlag").style.display="none";
+    return;
+  }
+  const def=listDef(activeList); const arr=items(activeList).filter(it=>!it.archived);
   const counted=arr.filter(it=>isCountedIn(def,it)).length;
   $("#statCounted").textContent=counted; $("#statTotal").textContent=arr.length;
   $("#progBar").style.width=(arr.length?Math.round(counted/arr.length*100):0)+"%";
@@ -679,45 +866,109 @@ $("#search").addEventListener("input",e=>{
 $("#clr").onclick=()=>{ $("#search").value=""; filterText=""; $("#clr").style.display="none"; renderList(); $("#search").focus(); };
 
 /* ---------- Add / Edit ---------- */
-let editingUid=null;
+let editingUid=null, editTargetList=null, pendingPhoto=null, pendingPhotoRemove=false;
+function fillLocList(){
+  const locs=[...new Set(allItems().filter(x=>x.it.loc).map(x=>x.it.loc))].sort();
+  $("#locList").innerHTML=locs.map(l=>`<option value="${escAttr(l)}">`).join("");
+}
+function setPhotoPreview(it){
+  pendingPhoto=null; pendingPhotoRemove=false;
+  const pv=$("#f_pv"); pv.innerHTML="📷"; $("#f_photoDel").style.display="none";
+  if(it && it.hasImg){ imgGet(it.uid).then(b=>{ if(b){ pv.innerHTML='<img src="'+URL.createObjectURL(b)+'">'; $("#f_photoDel").style.display=""; } }); }
+}
 function openAdd(prefillArt){
-  editingUid=null;
+  if(isArchiveView()){ toast("Kies eerst een lijst om aan toe te voegen","warn"); return; }
+  editingUid=null; editTargetList=activeList;
   $("#editTitle").textContent="Artikel toevoegen";
   $("#editHint").textContent="Lijst: "+listDef(activeList).name;
-  ["pos","name","art","boal","artbrut","len","sup","exp","count","note"].forEach(k=>$("#f_"+k).value="");
+  ["pos","name","art","boal","artbrut","len","sup","exp","count","note","loc","uw"].forEach(k=>$("#f_"+k).value="");
   $("#f_flag").checked=false;
   if(prefillArt) $("#f_art").value=prefillArt;
-  $("#editDelete").style.display="none";
+  $("#editDelete").style.display="none"; $("#f_archive").style.display="none";
+  setPhotoPreview(null); fillLocList();
   openOverlay("editOverlay");
   setTimeout(()=>$("#f_name").focus(),100);
 }
 function openEdit(it){
-  editingUid=it.uid;
+  editingUid=it.uid; editTargetList=null;
+  for(const def of LIST_DEFS){ if(items(def.id).some(x=>x.uid===it.uid)){ editTargetList=def.id; break; } }
   $("#editTitle").textContent="Artikel bewerken";
-  $("#editHint").textContent="Lijst: "+listDef(activeList).name;
+  $("#editHint").textContent="Lijst: "+(listDef(editTargetList)?listDef(editTargetList).name:"");
   $("#f_pos").value=it.pos||""; $("#f_name").value=it.name||""; $("#f_art").value=it.art||"";
   $("#f_boal").value=it.boal||""; $("#f_artbrut").value=it.artBrut||""; $("#f_len").value=it.len||""; $("#f_sup").value=it.sup||"";
   $("#f_exp").value=it.expected??""; $("#f_count").value=it.count??""; $("#f_note").value=it.note||""; $("#f_flag").checked=!!it.flag;
+  $("#f_loc").value=it.loc||""; $("#f_uw").value=it.uw||"";
   $("#editDelete").style.display="";
+  $("#f_archive").style.display=""; $("#f_archive").textContent=it.archived?"↩ Terug naar de actieve lijst":"📦 Naar oude catalogus verplaatsen";
+  setPhotoPreview(it); fillLocList();
   openOverlay("editOverlay");
 }
-$("#editSave").onclick=()=>{
+$("#editSave").onclick=async ()=>{
   const cv=$("#f_count").value.trim();
   const data={ pos:$("#f_pos").value.trim(), name:$("#f_name").value.trim(), art:$("#f_art").value.trim(),
     boal:$("#f_boal").value.trim(), artBrut:$("#f_artbrut").value.trim(), len:$("#f_len").value.trim(), sup:$("#f_sup").value.trim(),
     expected:$("#f_exp").value.trim(), count:(cv===""?null:Math.max(0,parseInt(cv,10)||0)),
-    note:$("#f_note").value.trim(), flag:$("#f_flag").checked };
+    note:$("#f_note").value.trim(), flag:$("#f_flag").checked, loc:$("#f_loc").value.trim(), uw:$("#f_uw").value.trim() };
   if(!data.name && !data.art){ toast("Vul minstens een naam of artikelnummer in","warn"); return; }
-  if(editingUid){
-    const it=items(activeList).find(x=>x.uid===editingUid); Object.assign(it,data);
-  } else {
-    items(activeList).push(Object.assign({uid:uid()},data));
-  }
+  let it;
+  if(editingUid){ it=items(editTargetList).find(x=>x.uid===editingUid); Object.assign(it,data); }
+  else { it=Object.assign({uid:uid(),byWeight:false,wTotal:"",wTare:"",hasImg:false,archived:false},data); items(editTargetList).push(it); }
+  if(pendingPhotoRemove){ await imgDel(it.uid); it.hasImg=false; }
+  if(pendingPhoto){ await imgPut(it.uid,pendingPhoto); it.hasImg=true; }
   save(); closeOverlays(); renderAll(); toast("Opgeslagen","ok");
 };
-$("#editDelete").onclick=()=>{ if(editingUid && confirm("Artikel verwijderen?")){ DB.lists[activeList]=items(activeList).filter(x=>x.uid!==editingUid); save(); closeOverlays(); renderAll(); } };
-$("#addBtn").onclick=()=>{ if(listDef(activeList).type==="bon"){ items("bon").push({uid:uid(),bon:"",sup:"",desc:""}); save(); renderAll(); window.scrollTo(0,document.body.scrollHeight); } else openAdd(); };
+$("#editDelete").onclick=async ()=>{ if(editingUid && confirm("Artikel verwijderen?")){ await imgDel(editingUid); DB.lists[editTargetList]=items(editTargetList).filter(x=>x.uid!==editingUid); save(); closeOverlays(); renderAll(); } };
+$("#f_archive").onclick=()=>{ if(!editingUid) return; const it=items(editTargetList).find(x=>x.uid===editingUid); it.archived=!it.archived; save(); closeOverlays(); renderAll(); toast(it.archived?"Naar oude catalogus 📦":"Terug in de lijst","ok"); };
+$("#addBtn").onclick=()=>{ const def=curDef();
+  if(isArchiveView()){ toast("Kies eerst een lijst","warn"); return; }
+  if(def.type==="bon"){ items("bon").push({uid:uid(),bon:"",sup:"",desc:""}); save(); renderAll(); window.scrollTo(0,document.body.scrollHeight); } else openAdd(); };
 $("#editClose").onclick=closeOverlays;
+
+/* ---- Foto kiezen + comprimeren ---- */
+$("#f_photoBtn").onclick=()=>$("#f_photoInput").click();
+$("#f_photoInput").onchange=e=>{ const f=e.target.files[0]; if(!f) return; compressImage(f,720,0.72).then(blob=>{
+  pendingPhoto=blob; pendingPhotoRemove=false; $("#f_pv").innerHTML='<img src="'+URL.createObjectURL(blob)+'">'; $("#f_photoDel").style.display="";
+}).catch(()=>toast("Kon foto niet verwerken","err")); e.target.value=""; };
+$("#f_photoDel").onclick=()=>{ pendingPhoto=null; pendingPhotoRemove=true; $("#f_pv").innerHTML="📷"; $("#f_photoDel").style.display="none"; };
+function compressImage(file,maxDim,quality){ return new Promise((res,rej)=>{
+  const img=new Image(); img.onload=()=>{ let{width:w,height:h}=img; const s=Math.min(1,maxDim/Math.max(w,h)); w=Math.round(w*s); h=Math.round(h*s);
+    const c=document.createElement("canvas"); c.width=w; c.height=h; c.getContext("2d").drawImage(img,0,0,w,h);
+    c.toBlob(b=>b?res(b):rej(),"image/jpeg",quality); };
+  img.onerror=rej; img.src=URL.createObjectURL(file);
+}); }
+
+/* ---- Foto fullscreen ---- */
+function showImage(it){ $("#imgTitle").textContent=it.name||it.art||"Foto"; imgGet(it.uid).then(b=>{ if(b){ $("#imgFull").src=URL.createObjectURL(b); openOverlay("imgOverlay"); } else toast("Geen foto","warn"); }); }
+$("#imgClose").onclick=closeOverlays;
+
+/* ---- Wegen ---- */
+let weighItem=null, weighDef=null;
+function openWeigh(it,def){ weighItem=it; weighDef=def;
+  $("#weighHint").textContent=(it.name||it.art||"")+" — vul totaalgewicht in, het aantal wordt berekend.";
+  $("#w_total").value=it.wTotal||""; $("#w_tare").value=it.wTare||""; $("#w_uw").value=it.uw||"";
+  calcWeigh(); openOverlay("weighOverlay"); setTimeout(()=>$("#w_total").focus(),100);
+}
+function calcWeigh(){ const tot=parseFloat($("#w_total").value)||0, tare=parseFloat($("#w_tare").value)||0, uw=parseFloat($("#w_uw").value)||0;
+  const net=Math.max(0,tot-tare); const n=uw>0?Math.round(net/uw):null;
+  $("#w_out").textContent=n==null?"—":n+" st";
+  $("#w_calc").textContent=uw>0?(net+" g ÷ "+uw+" g/st"):"vul gewicht per stuk in";
+  return n;
+}
+["w_total","w_tare","w_uw"].forEach(id=>$("#"+id).addEventListener("input",calcWeigh));
+$("#weighUse").onclick=()=>{ const n=calcWeigh(); if(n==null){ toast("Vul gewicht per stuk in","warn"); return; }
+  weighItem.wTotal=$("#w_total").value.trim(); weighItem.wTare=$("#w_tare").value.trim(); weighItem.uw=$("#w_uw").value.trim();
+  weighItem.byWeight=true; closeOverlays(); commitCount(weighItem,n,document.getElementById("it_"+weighItem.uid),weighDef); toast("Aantal via gewicht: "+n+" st","ok"); };
+$("#weighClose").onclick=closeOverlays;
+
+/* ---- Locatiefilter ---- */
+$("#locFilter").onchange=e=>{ locFilterVal=e.target.value; renderList(); };
+
+/* ---- Bulk archiveren ---- */
+$("#mArchiveUncounted").onclick=()=>{ if(isArchiveView()){ toast("Niet in de oude catalogus","warn"); return; }
+  const def=curDef(); const arr=items(activeList).filter(it=>!it.archived && !isCountedIn(def,it));
+  if(!arr.length){ toast("Geen niet-getelde artikelen","ok"); return; }
+  if(!confirm(arr.length+" niet-getelde artikelen uit '"+def.name+"' naar de oude catalogus verplaatsen?")) return;
+  arr.forEach(it=>it.archived=true); save(); closeOverlays(); renderAll(); toast(arr.length+" naar oude catalogus 📦","ok"); };
 
 /* ---------- Scanner (BarcodeDetector met fallback) ---------- */
 let scanStream=null, scanLoop=null, detector=null;
@@ -793,7 +1044,7 @@ $("#scanClose").onclick=()=>{ stopScanner(); closeOverlays(); };
 $("#scanManual").onclick=()=>{ stopScanner(); closeOverlays(); const c=prompt("Artikelnummer:"); if(c) findAndFocus(c.trim(),false); };
 
 /* ---------- More menu ---------- */
-$("#moreBtn").onclick=()=>{ $("#moreListName").textContent=listDef(activeList).name;
+$("#moreBtn").onclick=()=>{ $("#moreListName").textContent=curDef().name;
   $("#setTolAbs").value=DB.settings.tolAbs; $("#setTolPct").value=DB.settings.tolPct; openOverlay("moreOverlay"); };
 $("#moreClose").onclick=closeOverlays;
 function saveTol(){ const a=parseInt($("#setTolAbs").value,10), p=parseInt($("#setTolPct").value,10);
@@ -817,13 +1068,14 @@ $("#mDevReport").onclick=()=>{
   closeOverlays(); toast(rows.length+" afwijkingen geëxporteerd","ok");
 };
 $("#mResetCounts").onclick=()=>{
+  if(isArchiveView()){ toast("Niet van toepassing op de oude catalogus","warn"); return; }
   if(!confirm("Alle ingevoerde tellingen van '"+listDef(activeList).name+"' wissen? (artikelen blijven staan)")) return;
-  if(listDef(activeList).type==="bon"){ DB.lists.bon=[]; } else { items(activeList).forEach(it=>it.count=null); }
+  if(listDef(activeList).type==="bon"){ DB.lists.bon=[]; } else { items(activeList).forEach(it=>{ it.count=null; it.byWeight=false; it.wTotal=""; it.wTare=""; }); }
   save(); closeOverlays(); renderAll(); toast("Tellingen gewist","ok");
 };
 $("#mBackup").onclick=()=>{ downloadFile("obimex-telling-"+stamp()+".json", JSON.stringify(DB,null,2), "application/json"); closeOverlays(); };
 $("#mRestore").onclick=()=>{ pendingRestore=true; $("#fileInput").accept=".json"; $("#fileInput").click(); };
-$("#mImport").onclick=()=>{ closeOverlays(); $("#importListName").textContent=listDef(activeList).name; $("#importText").value=""; $("#importReplace").checked=false; openOverlay("importOverlay"); };
+$("#mImport").onclick=()=>{ if(isArchiveView()){ toast("Kies eerst een lijst","warn"); return; } closeOverlays(); $("#importListName").textContent=listDef(activeList).name; $("#importText").value=""; $("#importReplace").checked=false; openOverlay("importOverlay"); };
 
 let pendingRestore=false;
 $("#fileInput").onchange=e=>{
@@ -848,9 +1100,10 @@ $("#importDo").onclick=()=>{
     if(def.type==="bon"){
       newItems.push({uid:uid(),bon:c[0]||"",sup:c[1]||"",desc:c[2]||""}); added++;
     } else {
-      // Pr.nr ; Art.nr ; Naam ; Lengte ; Verwacht ; Boal ; Brut ; Leverancier
+      // Pr.nr ; Art.nr ; Naam ; Lengte ; Verwacht ; Boal ; Brut ; Leverancier ; Locatie
       const it={uid:uid(),pos:c[0]||"",art:c[1]||"",name:c[2]||"",len:c[3]||"",expected:(c[4]||""),
-        boal:c[5]||"",artBrut:c[6]||"",sup:c[7]||"",count:null,note:"",flag:false};
+        boal:c[5]||"",artBrut:c[6]||"",sup:c[7]||"",loc:(c[8]||""),
+        count:null,note:"",flag:false,uw:"",wTotal:"",wTare:"",byWeight:false,hasImg:false,archived:false};
       if(!it.name && !it.art) continue;
       newItems.push(it); added++;
     }
@@ -862,20 +1115,27 @@ $("#importDo").onclick=()=>{
 
 /* ---------- Export CSV ---------- */
 $("#exportBtn").onclick=()=>{
-  const def=listDef(activeList); const arr=items(activeList); let csv="";
-  if(def.type==="bon"){
-    csv="Bon nummer;Leverancier;Korte omschrijving\n";
-    arr.forEach(it=>csv+=[it.bon,it.sup,it.desc].map(csvCell).join(";")+"\n");
+  let csv="", fn="";
+  if(isArchiveView()){
+    csv="Lijst;Pr.nr;Art.nummer;Profielnaam;Lengte;Locatie;Notitie\n";
+    allItems().filter(x=>x.it.archived).forEach(({it,def})=>csv+=[def.name,it.pos,it.art||it.artBrut,it.name,it.len,it.loc,it.note].map(csvCell).join(";")+"\n");
+    fn="oude-catalogus";
   } else {
-    csv="Pr. nr.;Art. nummer;"+(def.showBoal?"Boal nummer;Art.nr Brut;":"")+"Profielnaam;Lengte mm;Leverancier;Verwacht;Aantal telling;Verschil;Management;Notitie\n";
-    arr.forEach(it=>{
-      const d=deviation(it);
-      const cells=[it.pos,it.art]; if(def.showBoal) cells.push(it.boal,it.artBrut);
-      cells.push(it.name,it.len,it.sup,it.expected??"",it.count??"",(d?(d.diff>0?"+":"")+d.diff:""),it.flag?"JA":"",it.note||"");
-      csv+=cells.map(csvCell).join(";")+"\n";
-    });
+    const def=listDef(activeList); const arr=items(activeList).filter(it=>!it.archived); fn=def.id;
+    if(def.type==="bon"){
+      csv="Bon nummer;Leverancier;Korte omschrijving\n";
+      arr.forEach(it=>csv+=[it.bon,it.sup,it.desc].map(csvCell).join(";")+"\n");
+    } else {
+      csv="Pr. nr.;Art. nummer;"+(def.showBoal?"Boal nummer;Art.nr Brut;":"")+"Profielnaam;Lengte mm;Locatie;Leverancier;Verwacht;Aantal telling;Via gewicht;Verschil;Management;Notitie\n";
+      arr.forEach(it=>{
+        const d=deviation(it);
+        const cells=[it.pos,it.art]; if(def.showBoal) cells.push(it.boal,it.artBrut);
+        cells.push(it.name,it.len,it.loc,it.sup,it.expected??"",it.count??"",it.byWeight?"JA":"",(d?(d.diff>0?"+":"")+d.diff:""),it.flag?"JA":"",it.note||"");
+        csv+=cells.map(csvCell).join(";")+"\n";
+      });
+    }
   }
-  downloadFile("obimex-"+def.id+"-"+stamp()+".csv","﻿"+csv,"text/csv");
+  downloadFile("obimex-"+fn+"-"+stamp()+".csv","﻿"+csv,"text/csv");
   toast("CSV gedownload","ok");
 };
 $("#printBtn").onclick=()=>window.print();
@@ -901,7 +1161,11 @@ $("#search").addEventListener("keydown",e=>{
 });
 
 /* ---------- Init ---------- */
+(function(){ try{ const loc=new URLSearchParams(location.search).get("loc");
+  if(loc){ for(const def of LIST_DEFS){ if(items(def.id).some(it=>!it.archived && it.loc===loc)){ activeList=def.id; break; } } locFilterVal=loc; }
+}catch(e){} })();
 renderAll();
+if(locFilterVal) toast("📍 Locatie: "+locFilterVal,"ok");
 window.addEventListener("beforeunload",save);
 </script>
 </body>

@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0d47a1">
+<title>Obimex — Plattegrond</title>
+<style>
+  :root{
+    --bg:#0f1620; --panel:#16202c; --panel-2:#1d2a38; --line:#28384a;
+    --txt:#eef4fb; --muted:#9fb2c6; --soft:#7c91a8;
+    --blue:#3ea6ff; --blue-d:#0d47a1; --green:#27c08a; --amber:#ffb02e; --red:#ff5d52;
+    --obimex:#ff7a18; --radius:14px; --shadow:0 8px 30px rgba(0,0,0,.4);
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:var(--bg);color:var(--txt);line-height:1.5;overflow:hidden}
+  a{color:var(--blue);text-decoration:none}
+  button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+
+  header.top{position:fixed;top:0;left:0;right:0;z-index:50;background:linear-gradient(180deg,#16202c,#131c26);
+    border-bottom:1px solid var(--line);padding:10px 14px;display:flex;align-items:center;gap:10px}
+  header.top .brand{display:flex;align-items:center;gap:9px;font-weight:800}
+  header.top .brand .dot{width:11px;height:11px;border-radius:50%;background:var(--obimex);box-shadow:0 0 14px var(--obimex)}
+  header.top .brand small{display:block;font-weight:500;color:var(--muted);font-size:10px;letter-spacing:1.5px;text-transform:uppercase}
+  header.top .spacer{flex:1}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;font-weight:700;font-size:13px;
+    border-radius:11px;padding:10px 12px;border:1px solid var(--line);background:var(--panel);color:var(--txt);transition:.15s}
+  .btn:hover{border-color:var(--blue)}
+  .btn.blue{background:var(--blue-d);border-color:var(--blue);color:#fff}
+  .btn.obi{background:linear-gradient(135deg,var(--obimex),#e85d00);border-color:transparent;color:#180a00}
+  .btn.on{background:var(--blue-d);border-color:var(--blue);color:#fff}
+  .btn.sm{padding:8px 10px;font-size:12.5px}
+  .btn.ghost{background:transparent}
+
+  /* canvas */
+  #stage{position:absolute;top:54px;bottom:0;left:0;right:0;overflow:auto;background:#0a0f15;
+    background-image:linear-gradient(rgba(62,166,255,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(62,166,255,.05) 1px,transparent 1px);
+    background-size:30px 30px}
+  #canvas{position:relative;margin:auto;width:1000px;min-width:100%;min-height:100%;transform-origin:top left}
+  #plan{display:block;width:100%;height:auto;pointer-events:none;user-select:none}
+  #noimg{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;color:var(--muted);width:80%}
+  #noimg .big{font-size:46px;margin-bottom:12px}
+
+  .zone{position:absolute;transform:translate(-50%,-50%);z-index:5;display:flex;flex-direction:column;align-items:center;gap:3px;
+    cursor:pointer;touch-action:none}
+  .zone .pin{min-width:30px;height:30px;padding:0 9px;border-radius:999px;display:grid;place-items:center;font-weight:800;font-size:14px;
+    background:var(--obimex);color:#180a00;border:2px solid #fff;box-shadow:0 3px 10px rgba(0,0,0,.5);white-space:nowrap}
+  .zone .who{font-size:10px;background:rgba(10,15,21,.85);border:1px solid var(--line);color:var(--txt);
+    padding:1px 6px;border-radius:6px;white-space:nowrap;max-width:130px;overflow:hidden;text-overflow:ellipsis}
+  .zone .badge{position:absolute;top:-7px;right:-7px;min-width:18px;height:18px;padding:0 4px;border-radius:999px;background:var(--blue);
+    color:#fff;font-size:10px;font-weight:800;display:grid;place-items:center;border:1.5px solid var(--bg)}
+  .zone.done .pin{background:var(--green);color:#03130c}
+  .zone.editing .pin{outline:3px dashed #fff;outline-offset:2px}
+
+  .hintbar{position:fixed;top:54px;left:0;right:0;z-index:20;background:rgba(255,122,24,.14);border-bottom:1px solid var(--obimex);
+    color:#ffd0a8;font-size:13px;padding:8px 14px;text-align:center;display:none}
+  .hintbar.show{display:block}
+
+  .zoombar{position:fixed;right:12px;bottom:14px;z-index:30;display:flex;flex-direction:column;gap:6px}
+  .zoombar button{width:44px;height:44px;border-radius:12px;background:var(--panel);border:1px solid var(--line);color:var(--txt);
+    font-size:22px;font-weight:700;box-shadow:var(--shadow)}
+
+  /* sheet */
+  .overlay{position:fixed;inset:0;z-index:100;background:rgba(6,10,16,.78);backdrop-filter:blur(4px);display:none;align-items:flex-end;justify-content:center}
+  .overlay.open{display:flex}
+  .sheet{background:var(--panel);border:1px solid var(--line);border-radius:20px 20px 0 0;width:100%;max-width:640px;
+    max-height:90vh;overflow:auto;padding:18px 16px calc(18px + env(safe-area-inset-bottom))}
+  @media(min-width:600px){.overlay{align-items:center}.sheet{border-radius:20px}}
+  .sheet h3{font-size:18px;margin-bottom:4px;display:flex;align-items:center;gap:8px}
+  .sheet .hint{color:var(--muted);font-size:13px;margin-bottom:12px}
+  .sheet .row{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+  .sheet label.f{display:block;margin-top:10px}
+  .sheet label.f .lab{font-size:12px;color:var(--soft);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;display:block}
+  .sheet input.t,.sheet select.t{width:100%;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:12px;color:var(--txt);font-size:15px;outline:none}
+  .sheet input.t:focus{border-color:var(--blue)}
+  .prog{height:8px;border-radius:999px;background:var(--panel-2);overflow:hidden;margin:10px 0}
+  .prog>i{display:block;height:100%;background:linear-gradient(90deg,var(--green),var(--blue))}
+  .alist{margin-top:6px;display:flex;flex-direction:column;gap:6px;max-height:46vh;overflow:auto}
+  .arow{display:flex;align-items:center;gap:10px;background:var(--panel-2);border:1px solid var(--line);border-radius:10px;padding:9px 11px;font-size:14px}
+  .arow.c{border-color:rgba(39,192,138,.5)}
+  .arow .nm{flex:1;min-width:0}
+  .arow .nm small{display:block;color:var(--soft);font-size:11.5px}
+  .arow .q{font-weight:800;color:var(--green)}
+  .arow input[type=checkbox]{width:20px;height:20px;flex:none}
+  .colors{display:flex;gap:8px;margin-top:8px}
+  .colors button{width:30px;height:30px;border-radius:50%;border:2px solid transparent}
+  .colors button.on{border-color:#fff}
+  .toast{position:fixed;left:50%;bottom:84px;transform:translateX(-50%) translateY(20px);z-index:200;background:var(--panel-2);
+    border:1px solid var(--line);color:var(--txt);padding:11px 16px;border-radius:12px;font-size:14px;font-weight:600;opacity:0;
+    transition:.25s;box-shadow:var(--shadow);pointer-events:none;max-width:90vw;text-align:center}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  .toast.ok{border-color:var(--green)} .toast.warn{border-color:var(--amber)}
+  .empty{color:var(--soft);font-size:13px;padding:14px;text-align:center}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="brand"><span class="dot"></span><div>OBIMEX<small>Plattegrond</small></div></div>
+  <div class="spacer"></div>
+  <button class="btn sm" id="editBtn" title="Zones plaatsen/verplaatsen">✎ Bewerken</button>
+  <button class="btn sm" id="uploadBtn" title="Plattegrond uploaden">🖼️</button>
+  <a class="btn sm ghost" href="index.html">← Werkplek</a>
+  <input type="file" id="imgInput" accept="image/*" style="display:none">
+</header>
+
+<div class="hintbar" id="hintbar">Bewerkmodus: sleep zones om ze te verplaatsen · tik <b>＋ Zone</b> om er een toe te voegen · tik een zone om naam/teller te wijzigen.</div>
+
+<div id="stage">
+  <div id="canvas">
+    <img id="plan" alt="plattegrond" style="display:none">
+    <div id="noimg"><div class="big">🗺️</div><b>Nog geen plattegrond</b><br>Tik op 🖼️ rechtsboven om de plattegrond van het gebouw te uploaden (de Obimex-plattegrond). Daarna kun je zones plaatsen en artikelen koppelen.</div>
+  </div>
+</div>
+
+<div class="zoombar">
+  <button id="zoomIn">＋</button>
+  <button id="zoomOut">−</button>
+  <button id="addZoneBtn" class="btn obi" style="width:44px;height:44px;border-radius:12px;font-size:13px;font-weight:800;display:none">＋Zone</button>
+</div>
+
+<!-- Zone view sheet -->
+<div class="overlay" id="zoneOverlay">
+  <div class="sheet">
+    <h3 id="zTitle">Zone</h3>
+    <p class="hint" id="zWho"></p>
+    <div class="prog"><i id="zProg"></i></div>
+    <p style="font-size:13px;color:var(--muted)" id="zStat"></p>
+    <div class="alist" id="zList"></div>
+    <div class="row">
+      <button class="btn obi" style="flex:1" id="zCount">📋 Tel deze zone</button>
+      <button class="btn" id="zAssign">＋ Artikelen toewijzen</button>
+    </div>
+    <div class="row">
+      <button class="btn ghost sm" id="zEdit">✎ Zone bewerken</button>
+      <button class="btn ghost sm" id="zClose">Sluiten</button>
+    </div>
+  </div>
+</div>
+
+<!-- Zone edit sheet -->
+<div class="overlay" id="zEditOverlay">
+  <div class="sheet">
+    <h3>Zone bewerken</h3>
+    <label class="f"><span class="lab">Naam / letter zone</span><input class="t" id="ze_name" placeholder="bv. G, K, Voorraad glas"></label>
+    <label class="f"><span class="lab">Geteld door</span><input class="t" id="ze_who" placeholder="bv. Tonny, Raymond…"></label>
+    <div class="colors" id="ze_colors"></div>
+    <div class="row">
+      <button class="btn blue" style="flex:1" id="ze_save">Opslaan</button>
+      <button class="btn ghost" id="ze_del" style="color:var(--red)">Zone verwijderen</button>
+      <button class="btn ghost" id="ze_close">Annuleren</button>
+    </div>
+  </div>
+</div>
+
+<!-- Assign articles sheet -->
+<div class="overlay" id="assignOverlay">
+  <div class="sheet">
+    <h3>Artikelen toewijzen aan <span id="asZone"></span></h3>
+    <p class="hint">Vink artikelen aan die in deze zone liggen. Ze krijgen deze locatie en verschijnen hier bij het tellen.</p>
+    <input class="t" id="asSearch" placeholder="Zoek op naam of artikelnummer…" style="margin-bottom:8px">
+    <label style="display:flex;gap:8px;align-items:center;color:var(--muted);font-size:13px;margin-bottom:6px">
+      <input type="checkbox" id="asHideAssigned"> Verberg artikelen die al een locatie hebben</label>
+    <div class="alist" id="asList"></div>
+    <div class="row">
+      <button class="btn blue" style="flex:1" id="asDone">Klaar</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+"use strict";
+/* Plattegrond — deelt localStorage + IndexedDB met tellen.html */
+const STORE_KEY="obimex_telling_v1";
+const PLAN_KEY="__plattegrond__";
+const LISTS=[{id:"brut",name:"Brut H-profiel"},{id:"wit",name:"Almelo Wit"},{id:"9005",name:"Almelo 9005 FS"},{id:"vrij",name:"Vrije invoer"}];
+const COLORS=["#ff7a18","#3ea6ff","#27c08a","#c08bff","#ffb02e","#ff5d52","#999999"];
+const $=s=>document.querySelector(s);
+
+let DB=loadDB();
+if(!Array.isArray(DB.zones)) DB.zones=[];
+let editMode=false, zoom=1, curZone=null;
+
+function loadDB(){ try{ const r=localStorage.getItem(STORE_KEY); if(r){ const d=JSON.parse(r); if(d&&d.lists) return d; } }catch(e){}
+  return {v:1,lists:{},zones:[]}; }
+function saveDB(){ try{ localStorage.setItem(STORE_KEY,JSON.stringify(DB)); }catch(e){ toast("Opslaan mislukt","warn"); } }
+function zid(){ return "z_"+Math.round(performance.now()*1000)+"_"+Math.floor(Math.random()*1e6); }
+
+/* artikelen-helpers */
+function listItems(id){ return (DB.lists&&DB.lists[id])?DB.lists[id]:[]; }
+function allArticles(){ const out=[]; for(const l of LISTS){ for(const it of listItems(l.id)){ if(!it.archived) out.push({it,listName:l.name}); } } return out; }
+function zoneArticles(name){ return allArticles().filter(x=>(x.it.loc||"")===name); }
+function isCounted(it){ return it.count!==null && it.count!==undefined && it.count!==""; }
+
+/* ---------- IndexedDB (zelfde db/store als tellen.html) ---------- */
+let _idb=null;
+function idb(){ return _idb||(_idb=new Promise((res,rej)=>{ const r=indexedDB.open("obimex_img",1);
+  r.onupgradeneeded=()=>{ if(!r.result.objectStoreNames.contains("imgs")) r.result.createObjectStore("imgs"); };
+  r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error); })); }
+async function imgPut(k,b){ const db=await idb(); return new Promise((res,rej)=>{ const tx=db.transaction("imgs","readwrite"); tx.objectStore("imgs").put(b,k); tx.oncomplete=res; tx.onerror=()=>rej(tx.error); }); }
+async function imgGet(k){ const db=await idb(); return new Promise(res=>{ const tx=db.transaction("imgs","readonly"); const rq=tx.objectStore("imgs").get(k); rq.onsuccess=()=>res(rq.result||null); rq.onerror=()=>res(null); }); }
+
+/* ---------- Plattegrond-afbeelding ---------- */
+$("#uploadBtn").onclick=()=>$("#imgInput").click();
+$("#imgInput").onchange=e=>{ const f=e.target.files[0]; if(!f) return;
+  compressImage(f,2200,0.82).then(async blob=>{ await imgPut(PLAN_KEY,blob); loadPlan(); toast("Plattegrond opgeslagen","ok"); })
+  .catch(()=>toast("Kon afbeelding niet laden","warn")); e.target.value=""; };
+function compressImage(file,maxDim,q){ return new Promise((res,rej)=>{ const img=new Image();
+  img.onload=()=>{ let{width:w,height:h}=img; const s=Math.min(1,maxDim/Math.max(w,h)); w=Math.round(w*s); h=Math.round(h*s);
+    const c=document.createElement("canvas"); c.width=w; c.height=h; c.getContext("2d").drawImage(img,0,0,w,h);
+    c.toBlob(b=>b?res(b):rej(),"image/jpeg",q); }; img.onerror=rej; img.src=URL.createObjectURL(file); }); }
+async function loadPlan(){ const b=await imgGet(PLAN_KEY); const plan=$("#plan");
+  if(b){ plan.src=URL.createObjectURL(b); plan.style.display="block"; $("#noimg").style.display="none"; }
+  else { plan.style.display="none"; $("#noimg").style.display="block"; }
+  renderZones();
+}
+
+/* ---------- Zoom ---------- */
+function applyZoom(){ $("#canvas").style.width=(1000*zoom)+"px"; }
+$("#zoomIn").onclick=()=>{ zoom=Math.min(4,zoom+0.25); applyZoom(); };
+$("#zoomOut").onclick=()=>{ zoom=Math.max(0.5,zoom-0.25); applyZoom(); };
+
+/* ---------- Zones ---------- */
+function renderZones(){
+  document.querySelectorAll(".zone").forEach(z=>z.remove());
+  const canvas=$("#canvas");
+  DB.zones.forEach(z=>{
+    const arts=zoneArticles(z.name); const total=arts.length; const done=arts.filter(a=>isCounted(a.it)).length;
+    const el=document.createElement("div");
+    el.className="zone"+(total>0&&done===total?" done":"")+(editMode?" editing":"");
+    el.style.left=z.x+"%"; el.style.top=z.y+"%";
+    el.innerHTML=`<span class="pin" style="background:${z.color||'#ff7a18'}">${esc(z.name||'?')}${total?`<span class="badge">${done}/${total}</span>`:""}</span>${z.who?`<span class="who">👤 ${esc(z.who)}</span>`:""}`;
+    canvas.appendChild(el);
+    attachZone(el,z);
+  });
+}
+function attachZone(el,z){
+  let drag=false,moved=false,sx=0,sy=0;
+  el.addEventListener("pointerdown",e=>{ if(!editMode) return; drag=true;moved=false;sx=e.clientX;sy=e.clientY; el.setPointerCapture(e.pointerId); e.preventDefault(); });
+  el.addEventListener("pointermove",e=>{ if(!drag) return; if(Math.abs(e.clientX-sx)>3||Math.abs(e.clientY-sy)>3) moved=true;
+    const r=$("#plan").getBoundingClientRect(); let x=(e.clientX-r.left)/r.width*100, y=(e.clientY-r.top)/r.height*100;
+    z.x=Math.max(0,Math.min(100,x)); z.y=Math.max(0,Math.min(100,y)); el.style.left=z.x+"%"; el.style.top=z.y+"%"; });
+  el.addEventListener("pointerup",e=>{ if(!drag){ openZone(z); return; } drag=false; if(moved){ saveDB(); } else { openZone(z); } });
+}
+$("#addZoneBtn").onclick=()=>{ const z={id:zid(),name:String.fromCharCode(65+DB.zones.length%26),who:"",color:COLORS[DB.zones.length%COLORS.length],x:50,y:40};
+  DB.zones.push(z); saveDB(); renderZones(); openZoneEdit(z); };
+
+/* edit mode */
+$("#editBtn").onclick=()=>{ editMode=!editMode; $("#editBtn").classList.toggle("on",editMode);
+  $("#editBtn").innerHTML=editMode?"✓ Klaar":"✎ Bewerken"; $("#hintbar").classList.toggle("show",editMode);
+  $("#addZoneBtn").style.display=editMode?"grid":"none"; renderZones(); };
+
+/* ---------- Zone view ---------- */
+function openZone(z){ curZone=z;
+  $("#zTitle").textContent="Zone "+(z.name||"");
+  $("#zWho").textContent=z.who?("Geteld door "+z.who):"Nog geen teller toegewezen";
+  const arts=zoneArticles(z.name); const total=arts.length, done=arts.filter(a=>isCounted(a.it)).length;
+  $("#zProg").style.width=(total?Math.round(done/total*100):0)+"%";
+  $("#zStat").textContent=total?`${done} van ${total} artikelen geteld`:"Nog geen artikelen aan deze zone gekoppeld.";
+  const L=$("#zList"); L.innerHTML="";
+  if(!total){ L.innerHTML='<div class="empty">Koppel artikelen via "＋ Artikelen toewijzen".</div>'; }
+  arts.forEach(({it,listName})=>{ const r=document.createElement("div"); r.className="arow"+(isCounted(it)?" c":"");
+    r.innerHTML=`<div class="nm">${esc(it.name||it.art||"—")}<small>${esc(listName)}${it.art?(" · "+esc(it.art)):""}</small></div>
+      <div class="q">${isCounted(it)?esc(it.count)+" st":"—"}</div>`;
+    L.appendChild(r); });
+  openOverlay("zoneOverlay");
+}
+$("#zCount").onclick=()=>{ if(curZone) location.href="tellen.html?loc="+encodeURIComponent(curZone.name); };
+$("#zClose").onclick=closeOverlays;
+$("#zEdit").onclick=()=>openZoneEdit(curZone);
+
+/* ---------- Zone edit ---------- */
+let editingZone=null, pickColor=COLORS[0];
+function renderColorPicker(){ const c=$("#ze_colors"); c.innerHTML="";
+  COLORS.forEach(col=>{ const b=document.createElement("button"); b.style.background=col; b.className=col===pickColor?"on":"";
+    b.onclick=()=>{ pickColor=col; renderColorPicker(); }; c.appendChild(b); }); }
+function openZoneEdit(z){ if(!z) return; editingZone=z; pickColor=z.color||COLORS[0];
+  $("#ze_name").value=z.name||""; $("#ze_who").value=z.who||""; renderColorPicker(); openOverlay("zEditOverlay"); }
+$("#ze_save").onclick=()=>{ if(!editingZone) return; editingZone.name=$("#ze_name").value.trim()||editingZone.name;
+  editingZone.who=$("#ze_who").value.trim(); editingZone.color=pickColor; saveDB(); renderZones(); closeOverlays(); toast("Zone opgeslagen","ok"); };
+$("#ze_del").onclick=()=>{ if(!editingZone) return; if(!confirm("Zone '"+editingZone.name+"' verwijderen? (artikelen blijven bestaan)")) return;
+  DB.zones=DB.zones.filter(x=>x.id!==editingZone.id); saveDB(); renderZones(); closeOverlays(); toast("Zone verwijderd","ok"); };
+$("#ze_close").onclick=closeOverlays;
+
+/* ---------- Artikelen toewijzen ---------- */
+$("#zAssign").onclick=()=>openAssign(curZone);
+function openAssign(z){ if(!z) return; editingZone=z; $("#asZone").textContent=z.name||""; $("#asSearch").value=""; renderAssign(); openOverlay("assignOverlay"); }
+function renderAssign(){
+  const q=$("#asSearch").value.trim().toLowerCase(); const hide=$("#asHideAssigned").checked;
+  const L=$("#asList"); L.innerHTML="";
+  let n=0;
+  for(const {it,listName} of allArticles()){
+    if(hide && it.loc && it.loc!==editingZone.name) continue;
+    if(q && ![it.name,it.art,it.pos].some(v=>(v||"").toString().toLowerCase().includes(q))) continue;
+    if(n++>400) break;
+    const r=document.createElement("label"); r.className="arow";
+    const here=(it.loc||"")===editingZone.name;
+    r.innerHTML=`<input type="checkbox" ${here?"checked":""}><div class="nm">${esc(it.name||it.art||"—")}<small>${esc(listName)}${it.loc?(" · 📍 "+esc(it.loc)):""}</small></div>`;
+    r.querySelector("input").onchange=ev=>{ it.loc=ev.target.checked?editingZone.name:""; saveDB(); };
+    L.appendChild(r);
+  }
+  if(!n) L.innerHTML='<div class="empty">Geen artikelen gevonden. Voeg ze eerst toe in de tel-app.</div>';
+}
+$("#asSearch").oninput=renderAssign;
+$("#asHideAssigned").onchange=renderAssign;
+$("#asDone").onclick=()=>{ renderZones(); closeOverlays(); toast("Toewijzing opgeslagen","ok"); };
+
+/* ---------- Overlay helpers ---------- */
+function openOverlay(id){ closeOverlays(); $("#"+id).classList.add("open"); }
+function closeOverlays(){ document.querySelectorAll(".overlay").forEach(o=>o.classList.remove("open")); }
+document.querySelectorAll(".overlay").forEach(o=>o.addEventListener("click",e=>{ if(e.target===o) o.classList.remove("open"); }));
+function esc(s){ return (s==null?"":(""+s)).replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c])); }
+let toastT=null; function toast(m,k){ const t=$("#toast"); t.textContent=m; t.className="toast show "+(k||""); clearTimeout(toastT); toastT=setTimeout(()=>t.className="toast",2400); }
+
+/* ---------- Init ---------- */
+applyZoom(); loadPlan();
+</script>
+</body>
+</html>
